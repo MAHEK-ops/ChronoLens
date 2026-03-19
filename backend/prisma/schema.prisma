@@ -1,0 +1,127 @@
+// ─── ChronoLens Database Schema ─────────────────────────────────
+// PostGIS geometry columns are added via raw SQL migration
+// (see src/db/migrations/add_postgis_columns.sql)
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Location ───────────────────────────────────────────────────
+model Location {
+  id            Int      @id @default(autoincrement())
+  latitude      Float
+  longitude     Float
+  address       String?
+  placeName     String?
+  country       String?
+  coordinateKey String   @unique
+  createdAt     DateTime @default(now())
+
+  events        HistoricalEvent[]
+  timelineCache TimelineCache?
+  bookmarks     Bookmark[]
+  searchLogs    SearchLog[]
+}
+
+// ─── HistoricalEvent ────────────────────────────────────────────
+model HistoricalEvent {
+  id              Int      @id @default(autoincrement())
+  locationId      Int
+  title           String
+  description     String?  @db.Text
+  year            Int?
+  dateDisplay     String?
+  category        String   @default("UNKNOWN")
+  era             String   @default("UNKNOWN")
+  latitude        Float?
+  longitude       Float?
+  sourceUrl       String?
+  sourceName      String?
+  confidenceScore Float?   @default(0)
+  sourceCount     Int?     @default(0)
+  createdAt       DateTime @default(now())
+
+  location    Location          @relation(fields: [locationId], references: [id])
+  sourceLinks EventSourceLink[]
+}
+
+// ─── EventSource ────────────────────────────────────────────────
+model EventSource {
+  id                Int     @id @default(autoincrement())
+  name              String  @unique
+  baseUrl           String?
+  reliabilityWeight Float   @default(1.0)
+  isActive          Boolean @default(true)
+
+  sourceLinks EventSourceLink[]
+}
+
+// ─── EventSourceLink (junction table) ───────────────────────────
+model EventSourceLink {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  sourceId  Int
+  sourceUrl String?
+  fetchedAt DateTime @default(now())
+
+  event  HistoricalEvent @relation(fields: [eventId], references: [id])
+  source EventSource     @relation(fields: [sourceId], references: [id])
+}
+
+// ─── TimelineCache ──────────────────────────────────────────────
+model TimelineCache {
+  id                 Int      @id @default(autoincrement())
+  locationId         Int      @unique
+  radiusKm           Int      @default(10)
+  serializedTimeline String   @db.Text
+  generatedAt        DateTime @default(now())
+  expiresAt          DateTime
+
+  location Location @relation(fields: [locationId], references: [id])
+}
+
+// ─── AppUser ────────────────────────────────────────────────────
+model AppUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  bookmarks  Bookmark[]
+  searchLogs SearchLog[]
+}
+
+// ─── Bookmark ───────────────────────────────────────────────────
+model Bookmark {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  locationId Int
+  label      String?
+  savedAt    DateTime @default(now())
+
+  user     AppUser  @relation(fields: [userId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+}
+
+// ─── SearchLog ──────────────────────────────────────────────────
+model SearchLog {
+  id             Int      @id @default(autoincrement())
+  locationId     Int
+  userId         Int?
+  radiusKm       Int?
+  filtersApplied String?
+  resultCount    Int?
+  responseTimeMs Int?
+  searchedAt     DateTime @default(now())
+
+  location Location @relation(fields: [locationId], references: [id])
+  user     AppUser? @relation(fields: [userId], references: [id])
+}
