@@ -20,17 +20,17 @@ async function runPostgisMigration() {
     .map((s) => s.trim())
     .filter((s) => s.length > 0 && !s.startsWith('--'));
 
-  console.log('🌍 Running PostGIS migration...\n');
+  console.log('Running PostGIS migration...\n');
 
   for (const statement of statements) {
     try {
       await prisma.$executeRawUnsafe(statement);
       // Show first line of each statement as a label
       const label = statement.split('\n').find((l) => !l.startsWith('--') && l.trim()) || statement;
-      console.log(`  ✅ ${label.trim().substring(0, 60)}`);
+      console.log(`${label.trim().substring(0, 60)}`);
     } catch (err) {
-      console.error(`  ❌ Failed: ${statement.substring(0, 60)}`);
-      console.error(`     ${err.message}`);
+      console.error(`Failed: ${statement.substring(0, 60)}`);
+      console.error(`${err.message}`);
     }
   }
 
