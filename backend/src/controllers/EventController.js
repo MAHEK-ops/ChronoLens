@@ -1,6 +1,7 @@
 const EventRepository = require('../repositories/EventRepository');
 const LocationRepository = require('../repositories/LocationRepository');
 const CompareService = require('../services/CompareService');
+const TrendAnalysisService = require('../services/TrendAnalysisService');
 
 // ─── EventController ────────────────────────────────────────────
 // Handles filtered event queries and map viewport spatial lookups.
@@ -199,6 +200,52 @@ class EventController {
       return res.status(500).json({
         success: false,
         error: 'An unexpected error occurred while comparing locations.',
+      });
+    }
+  }
+
+  /**
+   * GET /api/trends/:locationId
+   * Category and era breakdown for a location's historical events.
+   *
+   * Response: { success, locationId, placeName, dominantCategory, dominantEra,
+   *             categoryBreakdown, eraBreakdown, timespan }
+   */
+  async getTrends(req, res) {
+    try {
+      const { locationId } = req.params;
+      const parsedId = parseInt(locationId, 10);
+
+      if (isNaN(parsedId) || parsedId <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: '"locationId" must be a positive integer.',
+        });
+      }
+
+      // Verify location exists
+      const location = await LocationRepository.findById(parsedId);
+      if (!location) {
+        return res.status(404).json({
+          success: false,
+          error: `Location with id ${parsedId} not found.`,
+        });
+      }
+
+      const analysis = await TrendAnalysisService.analyze(parsedId);
+
+      return res.status(200).json({
+        success: true,
+        locationId: parsedId,
+        placeName: location.placeName || location.address || null,
+        ...analysis,
+      });
+
+    } catch (err) {
+      console.error('🔴 EventController.getTrends unexpected error:', err);
+      return res.status(500).json({
+        success: false,
+        error: 'An unexpected error occurred while analyzing trends.',
       });
     }
   }

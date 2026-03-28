@@ -23,6 +23,9 @@ router.get('/events', (req, res) => EventController.getEvents(req, res));
 // ─── Compare Endpoint ──────────────────────────────────────────
 router.get('/compare', (req, res) => EventController.compareLocations(req, res));
 
+// ─── Trends Endpoint ───────────────────────────────────────────
+router.get('/trends/:locationId', (req, res) => EventController.getTrends(req, res));
+
 // ─── Bookmark Endpoints ────────────────────────────────────────
 router.post('/bookmarks', (req, res) => BookmarkController.save(req, res));
 router.get('/bookmarks/:userId', (req, res) => BookmarkController.getByUserId(req, res));
