@@ -5,6 +5,7 @@ const StoryModeService = require('../services/StoryModeService');
 const EventRepository = require('../repositories/EventRepository');
 const LocationRepository = require('../repositories/LocationRepository');
 const prisma = require('../db/prisma');
+const AppError = require('../utils/AppError');
 
 // ─── Service Wiring ─────────────────────────────────────────────
 // Fetchers and services export classes — instantiate once here.
@@ -51,7 +52,7 @@ class LocationController {
    * Response:
    *   { success, cached, location, timeline }
    */
-  async getTimeline(req, res) {
+  async getTimeline(req, res, next) {
     const startTime = Date.now();
 
     try {
@@ -62,10 +63,7 @@ class LocationController {
       const hasCoords = latitude != null && longitude != null;
 
       if (!hasAddress && !hasCoords) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed: "address" or "latitude"/"longitude" coordinates are required.',
-        });
+        throw new AppError('Validation failed: "address" or "latitude"/"longitude" coordinates are required.', 400);
       }
 
       // ── 2. Resolve location via LocationService ──
@@ -80,17 +78,11 @@ class LocationController {
         }
       } catch (geoErr) {
         console.error('❌ Geocoding failed:', geoErr.message);
-        return res.status(404).json({
-          success: false,
-          error: `Location not found for input: "${address || `${latitude},${longitude}`}"`,
-        });
+        throw new AppError(`Location not found for input: "${address || `${latitude},${longitude}`}"`, 404);
       }
 
       if (!locationData || locationData.latitude == null || locationData.longitude == null) {
-        return res.status(404).json({
-          success: false,
-          error: `Could not resolve location for: "${address || `${latitude},${longitude}`}"`,
-        });
+        throw new AppError(`Could not resolve location for: "${address || `${latitude},${longitude}`}"`, 404);
       }
 
       // Persist / retrieve the location record with PostGIS sync
@@ -124,10 +116,7 @@ class LocationController {
         console.error('❌ Aggregation pipeline failed:', aggErr.message);
 
         if (aggErr.message.includes('All data sources failed')) {
-          return res.status(503).json({
-            success: false,
-            error: 'All external data sources are currently unavailable. Please try again later.',
-          });
+          throw new AppError('All external data sources are currently unavailable. Please try again later.', 503);
         }
 
         throw aggErr; // Re-throw unexpected errors to the outer catch
@@ -157,11 +146,9 @@ class LocationController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 LocationController.getTimeline unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred. Please try again later.',
-      });
+      return next(new AppError('An unexpected error occurred. Please try again later.', 500));
     }
   }
 
@@ -171,25 +158,19 @@ class LocationController {
    *
    * Response: { success, locationId, placeName, narrative }
    */
-  async getStory(req, res) {
+  async getStory(req, res, next) {
     try {
       const { locationId } = req.params;
       const parsedId = parseInt(locationId, 10);
 
       if (isNaN(parsedId) || parsedId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: '"locationId" must be a positive integer.',
-        });
+        throw new AppError('"locationId" must be a positive integer.', 400);
       }
 
       // Verify location exists
       const location = await LocationRepository.findById(parsedId);
       if (!location) {
-        return res.status(404).json({
-          success: false,
-          error: `Location with id ${parsedId} not found.`,
-        });
+        throw new AppError(`Location with id ${parsedId} not found.`, 404);
       }
 
       // Fetch persisted events and build a timeline
@@ -207,11 +188,9 @@ class LocationController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 LocationController.getStory unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while generating the story.',
-      });
+      return next(new AppError('An unexpected error occurred while generating the story.', 500));
     }
   }
 

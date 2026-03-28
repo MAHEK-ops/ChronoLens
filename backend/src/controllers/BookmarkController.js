@@ -1,5 +1,6 @@
 const BookmarkRepository = require('../repositories/BookmarkRepository');
 const LocationRepository = require('../repositories/LocationRepository');
+const AppError = require('../utils/AppError');
 
 // ─── BookmarkController ─────────────────────────────────────────
 // Handles save, retrieve, and delete operations for user bookmarks.
@@ -15,35 +16,26 @@ class BookmarkController {
    *
    * Response: 201 { success, bookmark }
    */
-  async save(req, res) {
+  async save(req, res, next) {
     try {
       const { userId, locationId, label } = req.body;
 
       // ── Validate required fields ──
       if (!userId || !locationId) {
-        return res.status(400).json({
-          success: false,
-          error: '"userId" and "locationId" are required.',
-        });
+        throw new AppError('"userId" and "locationId" are required.', 400);
       }
 
       const parsedUserId = parseInt(userId, 10);
       const parsedLocationId = parseInt(locationId, 10);
 
       if (isNaN(parsedUserId) || parsedUserId <= 0 || isNaN(parsedLocationId) || parsedLocationId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: '"userId" and "locationId" must be positive integers.',
-        });
+        throw new AppError('"userId" and "locationId" must be positive integers.', 400);
       }
 
       // ── Check for duplicate bookmark ──
       const alreadyExists = await BookmarkRepository.exists(parsedUserId, parsedLocationId);
       if (alreadyExists) {
-        return res.status(409).json({
-          success: false,
-          error: 'Bookmark already exists for this user and location.',
-        });
+        throw new AppError('Bookmark already exists for this user and location.', 409);
       }
 
       // ── Resolve default label from location if not provided ──
@@ -64,11 +56,9 @@ class BookmarkController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 BookmarkController.save unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while saving the bookmark.',
-      });
+      return next(new AppError('An unexpected error occurred while saving the bookmark.', 500));
     }
   }
 
@@ -78,16 +68,13 @@ class BookmarkController {
    *
    * Response: { success, count, bookmarks }
    */
-  async getByUserId(req, res) {
+  async getByUserId(req, res, next) {
     try {
       const { userId } = req.params;
       const parsedUserId = parseInt(userId, 10);
 
       if (isNaN(parsedUserId) || parsedUserId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: '"userId" must be a positive integer.',
-        });
+        throw new AppError('"userId" must be a positive integer.', 400);
       }
 
       const bookmarks = await BookmarkRepository.findByUserId(parsedUserId);
@@ -99,11 +86,9 @@ class BookmarkController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 BookmarkController.getByUserId unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while fetching bookmarks.',
-      });
+      return next(new AppError('An unexpected error occurred while fetching bookmarks.', 500));
     }
   }
 
@@ -116,7 +101,7 @@ class BookmarkController {
    *
    * Response: { success, message }
    */
-  async delete(req, res) {
+  async delete(req, res, next) {
     try {
       const { id } = req.params;
       const { userId } = req.body;
@@ -125,27 +110,18 @@ class BookmarkController {
       const parsedUserId = parseInt(userId, 10);
 
       if (isNaN(parsedId) || parsedId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Bookmark "id" must be a positive integer.',
-        });
+        throw new AppError('Bookmark "id" must be a positive integer.', 400);
       }
 
       if (!userId || isNaN(parsedUserId) || parsedUserId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: '"userId" is required in the request body and must be a positive integer.',
-        });
+        throw new AppError('"userId" is required in the request body and must be a positive integer.', 400);
       }
 
       // ── Ownership-verified delete (returns false if not owner or not found) ──
       const deleted = await BookmarkRepository.delete(parsedId, parsedUserId);
 
       if (!deleted) {
-        return res.status(403).json({
-          success: false,
-          error: 'Forbidden: bookmark not found or does not belong to this user.',
-        });
+        throw new AppError('Forbidden: bookmark not found or does not belong to this user.', 403);
       }
 
       return res.status(200).json({
@@ -154,11 +130,9 @@ class BookmarkController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 BookmarkController.delete unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while deleting the bookmark.',
-      });
+      return next(new AppError('An unexpected error occurred while deleting the bookmark.', 500));
     }
   }
 }

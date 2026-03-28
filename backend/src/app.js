@@ -15,4 +15,11 @@ app.use(express.json());
 // ─── API Routes ─────────────────────────────────────────────────
 app.use('/api', router);
 
+// ─── Error Handling ─────────────────────────────────────────────
+const notFound = require('./middleware/notFound');
+const errorHandler = require('./middleware/errorHandler');
+
+app.use(notFound);
+app.use(errorHandler);
+
 module.exports = app;

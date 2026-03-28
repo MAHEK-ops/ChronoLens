@@ -2,6 +2,7 @@ const EventRepository = require('../repositories/EventRepository');
 const LocationRepository = require('../repositories/LocationRepository');
 const CompareService = require('../services/CompareService');
 const TrendAnalysisService = require('../services/TrendAnalysisService');
+const AppError = require('../utils/AppError');
 
 // ─── EventController ────────────────────────────────────────────
 // Handles filtered event queries and map viewport spatial lookups.
@@ -21,7 +22,7 @@ class EventController {
    *
    * Response: { success, count, events }
    */
-  async getEvents(req, res) {
+  async getEvents(req, res, next) {
     try {
       const { locationId, category, era, keyword, yearFrom, yearTo } = req.query;
 
@@ -29,19 +30,13 @@ class EventController {
       const parsedLocationId = parseInt(locationId, 10);
 
       if (!locationId || isNaN(parsedLocationId) || parsedLocationId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Query parameter "locationId" is required and must be a positive integer.',
-        });
+        throw new AppError('Query parameter "locationId" is required and must be a positive integer.', 400);
       }
 
       // ── Verify location exists in DB ──
       const location = await LocationRepository.findById(parsedLocationId);
       if (!location) {
-        return res.status(404).json({
-          success: false,
-          error: `Location with id ${parsedLocationId} not found.`,
-        });
+        throw new AppError(`Location with id ${parsedLocationId} not found.`, 404);
       }
 
       // ── Build filters object (all optional) ──
@@ -62,11 +57,9 @@ class EventController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 EventController.getEvents unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while fetching events.',
-      });
+      return next(new AppError('An unexpected error occurred while fetching events.', 500));
     }
   }
 
@@ -82,16 +75,13 @@ class EventController {
    *
    * Response: { success, count, events }
    */
-  async getEventsByViewport(req, res) {
+  async getEventsByViewport(req, res, next) {
     try {
       const { north, south, east, west } = req.query;
 
       // ── Validate all 4 bbox params are present and numeric ──
       if (north == null || south == null || east == null || west == null) {
-        return res.status(400).json({
-          success: false,
-          error: 'All bounding box parameters are required: "north", "south", "east", "west".',
-        });
+        throw new AppError('All bounding box parameters are required: "north", "south", "east", "west".', 400);
       }
 
       const n = parseFloat(north);
@@ -100,24 +90,15 @@ class EventController {
       const w = parseFloat(west);
 
       if ([n, s, e, w].some(isNaN)) {
-        return res.status(400).json({
-          success: false,
-          error: 'All bounding box parameters must be valid numbers.',
-        });
+        throw new AppError('All bounding box parameters must be valid numbers.', 400);
       }
 
       if (n <= s) {
-        return res.status(400).json({
-          success: false,
-          error: '"north" must be greater than "south".',
-        });
+        throw new AppError('"north" must be greater than "south".', 400);
       }
 
       if (e <= w) {
-        return res.status(400).json({
-          success: false,
-          error: '"east" must be greater than "west".',
-        });
+        throw new AppError('"east" must be greater than "west".', 400);
       }
 
       // ── PostGIS spatial query ──
@@ -130,11 +111,9 @@ class EventController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 EventController.getEventsByViewport unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while fetching viewport events.',
-      });
+      return next(new AppError('An unexpected error occurred while fetching viewport events.', 500));
     }
   }
 
@@ -148,7 +127,7 @@ class EventController {
    *
    * Response: { success, comparison: { location1: {...}, location2: {...} } }
    */
-  async compareLocations(req, res) {
+  async compareLocations(req, res, next) {
     try {
       const { location1, location2 } = req.query;
 
@@ -157,10 +136,7 @@ class EventController {
 
       // ── Validate both IDs ──
       if (!location1 || !location2 || isNaN(id1) || isNaN(id2) || id1 <= 0 || id2 <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Both "location1" and "location2" query parameters are required and must be positive integers.',
-        });
+        throw new AppError('Both "location1" and "location2" query parameters are required and must be positive integers.', 400);
       }
 
       // ── Verify both locations exist ──
@@ -170,17 +146,11 @@ class EventController {
       ]);
 
       if (!loc1) {
-        return res.status(404).json({
-          success: false,
-          error: `Location with id ${id1} not found.`,
-        });
+        throw new AppError(`Location with id ${id1} not found.`, 404);
       }
 
       if (!loc2) {
-        return res.status(404).json({
-          success: false,
-          error: `Location with id ${id2} not found.`,
-        });
+        throw new AppError(`Location with id ${id2} not found.`, 404);
       }
 
       // ── Compute comparison ──
@@ -196,11 +166,9 @@ class EventController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 EventController.compareLocations unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while comparing locations.',
-      });
+      return next(new AppError('An unexpected error occurred while comparing locations.', 500));
     }
   }
 
@@ -211,25 +179,19 @@ class EventController {
    * Response: { success, locationId, placeName, dominantCategory, dominantEra,
    *             categoryBreakdown, eraBreakdown, timespan }
    */
-  async getTrends(req, res) {
+  async getTrends(req, res, next) {
     try {
       const { locationId } = req.params;
       const parsedId = parseInt(locationId, 10);
 
       if (isNaN(parsedId) || parsedId <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: '"locationId" must be a positive integer.',
-        });
+        throw new AppError('"locationId" must be a positive integer.', 400);
       }
 
       // Verify location exists
       const location = await LocationRepository.findById(parsedId);
       if (!location) {
-        return res.status(404).json({
-          success: false,
-          error: `Location with id ${parsedId} not found.`,
-        });
+        throw new AppError(`Location with id ${parsedId} not found.`, 404);
       }
 
       const analysis = await TrendAnalysisService.analyze(parsedId);
@@ -242,11 +204,9 @@ class EventController {
       });
 
     } catch (err) {
+      if (err instanceof AppError) return next(err);
       console.error('🔴 EventController.getTrends unexpected error:', err);
-      return res.status(500).json({
-        success: false,
-        error: 'An unexpected error occurred while analyzing trends.',
-      });
+      return next(new AppError('An unexpected error occurred while analyzing trends.', 500));
     }
   }
 }
