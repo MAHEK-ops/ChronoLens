@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar/SearchBar';
 import Map from '../components/Map/Map';
 import Filters from '../components/Filters/Filters';
@@ -21,6 +22,21 @@ const Home = () => {
     keyword: '',
     sortOrder: 'ASC'
   });
+
+  const { state } = useLocation();
+
+  // ─── Auto-Boot Component with Passed Search Variables ───────────
+  // Resolves queries passed structurally from navigation (e.g. from Bookmarks route)
+  useEffect(() => {
+    if (state?.loadCoords) {
+      // Execute the search pipeline implicitly
+      handleSearch(state.loadCoords, state.loadRadius || 10);
+      
+      // Clean history state inherently so refresh does not trigger it again endlessly
+      window.history.replaceState({}, document.title);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.loadCoords]);
 
   // ─── 1. Search (fetchTimeline) ──────────────────────────────────
   const handleSearch = async (inputStr, radiusKm) => {

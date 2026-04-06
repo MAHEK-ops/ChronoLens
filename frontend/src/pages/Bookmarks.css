@@ -1,0 +1,160 @@
+.bookmarks-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.bookmarks-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.bookmarks-header h1 {
+  margin: 0 0 12px 0;
+  font-size: 32px;
+  color: #111827;
+}
+
+.bookmarks-header p {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0;
+}
+
+.loading-state {
+  text-align: center;
+  margin-top: 60px;
+  font-size: 18px;
+  color: #6b7280;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 12px;
+  padding: 60px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px 0;
+  color: #111827;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.bookmarks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.bookmark-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.bookmark-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.b-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.b-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.date-badge {
+  font-size: 12px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.b-body {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.b-body p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.b-coords {
+  font-family: monospace;
+  background-color: #f9fafb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px !important;
+}
+
+.b-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.b-footer button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-load {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-load:hover {
+  background-color: #2563eb;
+}
+
+.btn-delete {
+  background-color: white;
+  color: #ef4444;
+  border: 1px solid #fee2e2 !important;
+}
+
+.btn-delete:hover {
+  background-color: #fef2f2;
+}
