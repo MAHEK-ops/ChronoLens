@@ -1,0 +1,138 @@
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-left: 8px;
+}
+
+/* ── Timeline Visual Spine ── */
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.timeline-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 16px;
+  margin-top: 24px;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  border: 3px solid #eff6ff;
+  box-shadow: 0 0 0 1px #bfdbfe;
+  z-index: 1;
+}
+
+.timeline-line {
+  flex: 1;
+  width: 2px;
+  background-color: #e5e7eb;
+  margin-top: 4px;
+  margin-bottom: -20px;
+}
+
+.timeline-content {
+  flex: 1;
+  padding-bottom: 24px;
+}
+
+/* ── Empty State ── */
+.timeline-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.timeline-empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.timeline-empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ── Skeleton Loading ── */
+.timeline-skeleton {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.skel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skel-title {
+  height: 20px;
+  width: 60%;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+
+.skel-year {
+  height: 24px;
+  width: 60px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+}
+
+.skel-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.skel-badge {
+  height: 18px;
+  width: 80px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+
+.skel-desc {
+  height: 14px;
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.skel-desc.short {
+  width: 75%;
+}
